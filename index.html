@@ -42,9 +42,9 @@
 </div>
 
 <script>
-  // Endpoint pubblico del collector (verdetto verde/rosso, nessun token).
-  var ENDPOINT = "https://script.google.com/macros/s/AKfycbz6jZbLpyxrodOtQ9PBlJEOGylTIsol-h6z7IkeguT_JMnBLLBukD5L0UrZDHzjSsPCPg/exec";
-
+  // Legge SOLO un file dello stesso sito (status.json), aggiornato dal robot
+  // GitHub Actions. Nessuna chiamata a Google dal browser: niente lock Drive,
+  // funziona su qualsiasi telefono, loggato o no.
   function fmtTime(iso) {
     try {
       var d = new Date(iso);
@@ -52,8 +52,10 @@
              d.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
     } catch (e) { return ""; }
   }
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
 
-  // Chiamata da JSONP (?callback=render): niente CORS, niente login Google.
   function render(data) {
     var hasProblem = (data.issues || []).some(function (i) { return i.level === "problema"; });
     var ok = data.state === "OK";
@@ -82,32 +84,25 @@
       "Ultimo controllo: " + fmtTime(data.checkedAt) + " · si aggiorna da solo";
   }
 
-  function escapeHtml(s) {
-    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  }
-
   function showError() {
     var card = document.getElementById("card");
     card.style.background = "#6b6b6b";
     card.innerHTML = '<div class="emoji">?</div><div class="title">NON RAGGIUNGIBILE</div>';
     document.getElementById("foot").textContent =
-      "Non riesco a contattare il sistema di controllo. Riprovo tra poco.";
+      "Non riesco a leggere lo stato. Riprovo tra poco.";
   }
 
-  var current = null;
   function load() {
-    if (current) current.parentNode && current.parentNode.removeChild(current);
-    var s = document.createElement("script");
-    s.src = ENDPOINT + "?mode=statusjson&callback=render&_=" + Date.now();
-    s.onerror = showError;
-    document.body.appendChild(s);
-    current = s;
+    fetch("./status.json?_=" + Date.now(), { cache: "no-store" })
+      .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
+      .then(render)
+      .catch(showError);
   }
 
   load();
-  setInterval(load, 300000);          // ricarica ogni 5 minuti
+  setInterval(load, 120000);            // ricarica ogni 2 minuti
   document.addEventListener("visibilitychange", function () {
-    if (!document.hidden) load();      // ricarica quando riapri l'app
+    if (!document.hidden) load();        // ricarica quando riapri l'app
   });
 </script>
 </body>

@@ -1,0 +1,36 @@
+name: update-status
+
+# Prende il verdetto dal collector (server-side, dove Google non blocca) e lo
+# salva come status.json nel sito. La pagina legge solo quel file, stesso sito,
+# senza mai toccare Google dal browser.
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'   # ogni 15 minuti
+  workflow_dispatch:          # avvio manuale
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-status
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch verdetto dal collector
+        run: |
+          curl -fsSL "https://script.google.com/macros/s/AKfycbz6jZbLpyxrodOtQ9PBlJEOGylTIsol-h6z7IkeguT_JMnBLLBukD5L0UrZDHzjSsPCPg/exec?mode=statusjson" -o status.json
+          python3 -c "import json; d=json.load(open('status.json')); assert 'state' in d; print('ok:', d['state'])"
+
+      - name: Commit se cambiato
+        run: |
+          git config user.name "amimi-status-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add status.json
+          git diff --staged --quiet || git commit -m "update status.json"
+          git push
