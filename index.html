@@ -92,11 +92,20 @@
       "Non riesco a leggere lo stato. Riprovo tra poco.";
   }
 
+  // Sorgente primaria: raw.githubusercontent (CORS aperto, infrastruttura diversa
+  // da Pages che ignora la query e cachea 10 min un eventuale 404 vecchio).
+  // Fallback: status.json servito da Pages (stesso sito).
+  var RAW = "https://raw.githubusercontent.com/NoobHandbag/amimi-status/master/status.json";
+
+  function getJson(url) {
+    return fetch(url + "?_=" + Date.now(), { cache: "no-store" })
+      .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); });
+  }
+
   function load() {
-    fetch("./status.json?_=" + Date.now(), { cache: "no-store" })
-      .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
+    getJson(RAW)
       .then(render)
-      .catch(showError);
+      .catch(function () { getJson("./status.json").then(render).catch(showError); });
   }
 
   load();
