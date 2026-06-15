@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1f9d55">
+<title>Amimì — Stato sistema</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #f2efea;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 560px; margin: 0 auto; padding: 20px 16px 60px; }
+  .card {
+    border-radius: 20px; padding: 40px 24px; text-align: center; color: #fff;
+    box-shadow: 0 6px 20px rgba(0,0,0,.12); transition: background .3s;
+  }
+  .emoji { font-size: 54px; line-height: 1; font-weight: 700; }
+  .title { font-size: 26px; font-weight: 800; letter-spacing: .5px; margin-top: 14px; }
+  ul { list-style: none; padding: 0; margin: 24px 0 0; }
+  li {
+    display: flex; gap: 12px; align-items: flex-start; background: #fff;
+    border-radius: 14px; padding: 16px 18px; margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.08);
+  }
+  .dot { flex: none; width: 10px; height: 10px; border-radius: 50%; margin-top: 7px; }
+  .itext { font-size: 16px; line-height: 1.45; color: #2d2226; }
+  .allgood { text-align: center; color: #5b6b5f; font-size: 16px; margin-top: 24px; }
+  .foot { text-align: center; color: #9a948c; font-size: 13px; margin-top: 32px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="card" class="card" style="background:#9a948c">
+    <div class="emoji">…</div>
+    <div class="title">CONTROLLO IN CORSO</div>
+  </div>
+  <div id="list"></div>
+  <p class="foot" id="foot">Caricamento…</p>
+</div>
+
+<script>
+  // Endpoint pubblico del collector (verdetto verde/rosso, nessun token).
+  var ENDPOINT = "https://script.google.com/macros/s/AKfycbz6jZbLpyxrodOtQ9PBlJEOGylTIsol-h6z7IkeguT_JMnBLLBukD5L0UrZDHzjSsPCPg/exec";
+
+  function fmtTime(iso) {
+    try {
+      var d = new Date(iso);
+      return d.toLocaleDateString("it-IT", { day: "2-digit", month: "short" }) + " " +
+             d.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
+    } catch (e) { return ""; }
+  }
+
+  // Chiamata da JSONP (?callback=render): niente CORS, niente login Google.
+  function render(data) {
+    var hasProblem = (data.issues || []).some(function (i) { return i.level === "problema"; });
+    var ok = data.state === "OK";
+    var color = ok ? "#1f9d55" : (hasProblem ? "#c1121f" : "#d98a00");
+    var title = ok ? "TUTTO OK" : (hasProblem ? "CI SONO PROBLEMI" : "DA TENERE D'OCCHIO");
+    var emoji = ok ? "✓" : (hasProblem ? "!" : "~");
+
+    var card = document.getElementById("card");
+    card.style.background = color;
+    card.innerHTML = '<div class="emoji">' + emoji + '</div><div class="title">' + title + '</div>';
+    document.querySelector('meta[name=theme-color]').setAttribute("content", color);
+
+    var list = document.getElementById("list");
+    if (data.issues && data.issues.length) {
+      var html = "<ul>";
+      data.issues.forEach(function (i) {
+        var dot = i.level === "problema" ? "#c1121f" : "#d98a00";
+        html += '<li><span class="dot" style="background:' + dot + '"></span>' +
+                '<span class="itext">' + escapeHtml(i.text) + "</span></li>";
+      });
+      list.innerHTML = html + "</ul>";
+    } else {
+      list.innerHTML = '<p class="allgood">Tutti i processi automatici girano regolarmente. Niente da fare.</p>';
+    }
+    document.getElementById("foot").textContent =
+      "Ultimo controllo: " + fmtTime(data.checkedAt) + " · si aggiorna da solo";
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function showError() {
+    var card = document.getElementById("card");
+    card.style.background = "#6b6b6b";
+    card.innerHTML = '<div class="emoji">?</div><div class="title">NON RAGGIUNGIBILE</div>';
+    document.getElementById("foot").textContent =
+      "Non riesco a contattare il sistema di controllo. Riprovo tra poco.";
+  }
+
+  var current = null;
+  function load() {
+    if (current) current.parentNode && current.parentNode.removeChild(current);
+    var s = document.createElement("script");
+    s.src = ENDPOINT + "?mode=statusjson&callback=render&_=" + Date.now();
+    s.onerror = showError;
+    document.body.appendChild(s);
+    current = s;
+  }
+
+  load();
+  setInterval(load, 300000);          // ricarica ogni 5 minuti
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) load();      // ricarica quando riapri l'app
+  });
+</script>
+</body>
+</html>
