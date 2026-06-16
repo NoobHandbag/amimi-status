@@ -2,7 +2,8 @@ name: update-status
 
 # Prende il verdetto dal collector (server-side, dove Google non blocca) e lo
 # salva come status.json nel sito. La pagina legge solo quel file, stesso sito,
-# senza mai toccare Google dal browser.
+# senza mai toccare Google dal browser. Inoltre invia una notifica push quando
+# lo stato CAMBIA (OK <-> problema).
 
 on:
   schedule:
@@ -23,16 +24,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
       - name: Fetch verdetto dal collector
         run: |
           curl -fsSL "https://script.google.com/macros/s/AKfycbz6jZbLpyxrodOtQ9PBlJEOGylTIsol-h6z7IkeguT_JMnBLLBukD5L0UrZDHzjSsPCPg/exec?mode=statusjson" -o status.json
           python3 -c "import json; d=json.load(open('status.json')); assert 'state' in d; print('ok:', d['state'])"
 
+      - name: Notifica push al cambio di stato
+        env:
+          VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
+          COLLECTOR_TOKEN: ${{ secrets.COLLECTOR_TOKEN }}
+          COLLECTOR_URL: "https://script.google.com/macros/s/AKfycbz6jZbLpyxrodOtQ9PBlJEOGylTIsol-h6z7IkeguT_JMnBLLBukD5L0UrZDHzjSsPCPg/exec"
+        run: |
+          npm install web-push --no-save --silent
+          node notify.js
+
       - name: Commit se cambiato
         run: |
           git config user.name "amimi-status-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add status.json
+          git add status.json last_state.txt
           git diff --staged --quiet || git commit -m "update status.json"
           git push
