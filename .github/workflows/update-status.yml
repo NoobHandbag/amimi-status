@@ -6,7 +6,9 @@ name: update-status
 
 on:
   schedule:
-    - cron: '*/15 * * * *'   # ogni 15 minuti
+    # minuti "dispari" e non tondi: i tick :00/:15/:30/:45 sono i piu' affollati
+    # su GitHub e ritardano spesso. Questi sono piu' affidabili.
+    - cron: '7,22,37,52 * * * *'
   workflow_dispatch:          # avvio manuale
 
 permissions:
