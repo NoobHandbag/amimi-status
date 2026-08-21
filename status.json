@@ -1,1 +1,1 @@
-{"ok":false,"state":"PROBLEMI","checkedAt":"2026-08-21T05:06:25.784Z","issues":[{"level":"problema","text":"Riconciliazione magazzino: non gira da parecchio (atteso ogni 1h)."}]}
+{"ok":false,"state":"PROBLEMI","checkedAt":"2026-08-21T05:43:10.851Z","issues":[{"level":"problema","text":"Riconciliazione magazzino: non gira da parecchio (atteso ogni 1h)."},{"level":"attenzione","text":"Importazione vendite negozio (Qromo): ha segnalato un errore nelle ultime 24 ore."}]}
