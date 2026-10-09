@@ -1,1 +1,1 @@
-{"ok":false,"state":"PROBLEMI","checkedAt":"2026-10-08T22:22:22.791Z","issues":[{"level":"problema","text":"Riconciliazione magazzino: non gira da parecchio (atteso ogni 1h)."},{"level":"attenzione","text":"Spedizioni (GitHub): ha segnalato un errore nelle ultime 24 ore."}]}
+{"ok":false,"state":"PROBLEMI","checkedAt":"2026-10-09T02:28:28.942Z","issues":[{"level":"problema","text":"Riconciliazione magazzino: non gira da parecchio (atteso ogni 1h)."},{"level":"attenzione","text":"Spedizioni (GitHub): ha segnalato un errore nelle ultime 24 ore."}]}
