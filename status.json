@@ -1,1 +1,1 @@
-{"ok":false,"state":"PROBLEMI","checkedAt":"2026-11-16T18:19:51.701Z","issues":[{"level":"problema","text":"Riconciliazione magazzino: non gira da parecchio (atteso ogni 1h)."},{"level":"problema","text":"Report anomalie giornaliero: non gira da circa 348 ore (atteso ogni 24h)."}]}
+{"ok":false,"state":"PROBLEMI","checkedAt":"2026-11-17T01:53:23.914Z","issues":[{"level":"problema","text":"Riconciliazione magazzino: non gira da parecchio (atteso ogni 1h)."},{"level":"problema","text":"Report anomalie giornaliero: non gira da circa 356 ore (atteso ogni 24h)."}]}
